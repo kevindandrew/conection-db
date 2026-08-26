@@ -35,6 +35,7 @@ export async function postProduct(req: Request, res: Response) {
   try {
     const result = createProductoSchema.safeParse(req.body);
     console.log(result);
+
     if (!result.success) {
       return res.status(400).json({ error: result.error.issues });
     }
