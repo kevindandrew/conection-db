@@ -34,9 +34,6 @@ export async function getProductsById(req: Request, res: Response) {
 export async function postProduct(req: Request, res: Response) {
   try {
     const { nombre, precio, categoria } = req.body;
-    if (!nombre || !categoria || !precio) {
-      res.status(400).json({ error: "faltan datos obligatorios" });
-    }
     const newProduct = await ProductModel.create({ nombre, precio, categoria });
     res.status(201).json({ data: newProduct });
   } catch (error: any) {
