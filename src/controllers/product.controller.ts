@@ -1,6 +1,9 @@
 import type { Request, Response } from "express";
 import { ProductModel } from "../models/product.model.js";
-import { createProductoSchema } from "../schemas/product.schema.js";
+import {
+  createProductoSchema,
+  updateProductoSchema,
+} from "../schemas/product.schema.js";
 export async function getProducts(req: Request, res: Response) {
   try {
     const product = await ProductModel.findAll();
@@ -51,8 +54,16 @@ export async function putProduct(req: Request, res: Response) {
     const id = Number(req.params.id);
     if (isNaN(id)) {
       res.status(400).json({ error: "EL ID DEBE SER UN VALOR NUMERICO" });
+      return;
     }
-    const productoUpdate = await ProductModel.update(id, req.body);
+
+    const result = updateProductoSchema.safeParse(req.body);
+    if (!result.success) {
+      res.status(400).json({ error: result.error.issues });
+      return;
+    }
+
+    const productoUpdate = await ProductModel.update(id, result.data);
     if (!productoUpdate) {
       res.status(404).json({ error: "producto no encontrado" });
       return;
