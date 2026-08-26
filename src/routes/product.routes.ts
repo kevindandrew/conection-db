@@ -12,7 +12,7 @@ const router = Router();
 
 router.get("/", getProducts);
 router.get("/:id", getProductsById);
-router.post("/", validateSchema(createProductoSchema), postProduct);
+router.post("/", postProduct);
 router.put("/:id", putProduct);
 router.delete("/:id", deleteProducts);
 

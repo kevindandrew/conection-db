@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { ProductModel } from "../models/product.model.js";
-
+import { createProductoSchema } from "../schemas/product.schema.js";
 export async function getProducts(req: Request, res: Response) {
   try {
     const product = await ProductModel.findAll();
@@ -33,8 +33,12 @@ export async function getProductsById(req: Request, res: Response) {
 
 export async function postProduct(req: Request, res: Response) {
   try {
-    const { nombre, precio, categoria } = req.body;
-    const newProduct = await ProductModel.create({ nombre, precio, categoria });
+    const result = createProductoSchema.safeParse(req.body);
+    console.log(result);
+    if (!result.success) {
+      return res.status(400).json({ error: result.error.issues });
+    }
+    const newProduct = await ProductModel.create(result.data);
     res.status(201).json({ data: newProduct });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
