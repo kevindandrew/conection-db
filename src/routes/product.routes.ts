@@ -6,12 +6,13 @@ import {
   putProduct,
   deleteProducts,
 } from "../controllers/product.controller.js";
-import { validateProduct } from "../middleware/product.middleware.js";
+import { validateSchema } from "../middleware/validador.middleware.js";
+import { createProductoSchema } from "../schemas/product.schema.js";
 const router = Router();
 
 router.get("/", getProducts);
 router.get("/:id", getProductsById);
-router.post("/", validateProduct, postProduct);
+router.post("/", postProduct);
 router.put("/:id", putProduct);
 router.delete("/:id", deleteProducts);
 

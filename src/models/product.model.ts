@@ -1,5 +1,6 @@
-import { create } from "node:domain";
+import type { z } from "zod";
 import { pool } from "../config/db.js";
+import type { updateProductoSchema } from "../schemas/product.schema.js";
 
 //TIPADO DE LA TABLA
 export interface Producto {
@@ -10,7 +11,7 @@ export interface Producto {
 }
 // apartir de el tipado crear otros types
 export type CreateProductoInput = Omit<Producto, "id">;
-export type UpdateProductoInput = Partial<CreateProductoInput>;
+export type UpdateProductoInput = z.infer<typeof updateProductoSchema>;
 
 //FUNCIONES Q CONSULTAN A LA BASE DE DATOS
 export const ProductModel = {
@@ -38,15 +39,20 @@ export const ProductModel = {
     id: number,
     dato: UpdateProductoInput,
   ): Promise<Producto | null> => {
+    const campos = Object.keys(dato) as (keyof UpdateProductoInput)[];
+
+    const setClause = campos
+      .map((campo, i) => `${campo} = $${i + 1}`)
+      .join(", ");
+    const valores = campos.map((campo) => dato[campo]);
+
     const { rows } = await pool.query(
       `UPDATE productos
-            SET nombre = $1,
-            categoria = $2,
-            precio = $3
-            WHERE id = $4
+            SET ${setClause}
+            WHERE id = $${campos.length + 1}
             RETURNING *;
 `,
-      [dato.nombre, dato.categoria, dato.precio, id],
+      [...valores, id],
     );
     return rows[0] || null;
   },

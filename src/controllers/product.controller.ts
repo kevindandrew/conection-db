@@ -1,6 +1,9 @@
 import type { Request, Response } from "express";
 import { ProductModel } from "../models/product.model.js";
-
+import {
+  createProductoSchema,
+  updateProductoSchema,
+} from "../schemas/product.schema.js";
 export async function getProducts(req: Request, res: Response) {
   try {
     const product = await ProductModel.findAll();
@@ -33,8 +36,13 @@ export async function getProductsById(req: Request, res: Response) {
 
 export async function postProduct(req: Request, res: Response) {
   try {
-    const { nombre, precio, categoria } = req.body;
-    const newProduct = await ProductModel.create({ nombre, precio, categoria });
+    const result = createProductoSchema.safeParse(req.body);
+    console.log(result);
+
+    if (!result.success) {
+      return res.status(400).json({ error: result.error.issues });
+    }
+    const newProduct = await ProductModel.create(result.data);
     res.status(201).json({ data: newProduct });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -46,8 +54,16 @@ export async function putProduct(req: Request, res: Response) {
     const id = Number(req.params.id);
     if (isNaN(id)) {
       res.status(400).json({ error: "EL ID DEBE SER UN VALOR NUMERICO" });
+      return;
     }
-    const productoUpdate = await ProductModel.update(id, req.body);
+
+    const result = updateProductoSchema.safeParse(req.body);
+    if (!result.success) {
+      res.status(400).json({ error: result.error.issues });
+      return;
+    }
+
+    const productoUpdate = await ProductModel.update(id, result.data);
     if (!productoUpdate) {
       res.status(404).json({ error: "producto no encontrado" });
       return;
