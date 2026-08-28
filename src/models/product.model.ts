@@ -63,4 +63,11 @@ export const ProductModel = {
     );
     return (rowCount ?? 0) > 0;
   },
+  findByName: async (name: string): Promise<Producto | null> => {
+    const { rows } = await pool.query<Producto>(
+      "SELECT * FROM productos WHERE LOWER(nombre) = LOWER($1);",
+      [name],
+    );
+    return rows[0] || null;
+  },
 };

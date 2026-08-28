@@ -4,6 +4,7 @@ import {
   createProductoSchema,
   updateProductoSchema,
 } from "../schemas/product.schema.js";
+import { productService } from "../services/product.service.js";
 export async function getProducts(req: Request, res: Response) {
   try {
     const product = await ProductModel.findAll();
@@ -38,11 +39,15 @@ export async function postProduct(req: Request, res: Response) {
   try {
     const result = createProductoSchema.safeParse(req.body);
     console.log(result);
-
     if (!result.success) {
       return res.status(400).json({ error: result.error.issues });
     }
-    const newProduct = await ProductModel.create(result.data);
+    const { nombre, precio, categoria } = result.data;
+    const newProduct = await productService.createProduct(
+      nombre,
+      precio,
+      categoria,
+    );
     res.status(201).json({ data: newProduct });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
