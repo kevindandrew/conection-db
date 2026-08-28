@@ -7,8 +7,8 @@ import {
 import { productService } from "../services/product.service.js";
 export async function getProducts(req: Request, res: Response) {
   try {
-    const product = await ProductModel.findAll();
-    res.json({ totalProductos: product.length, data: product });
+    const result = await productService.getProductsFilters(req.query);
+    res.json(result);
   } catch (error) {
     console.error("error al consultar PostgreSQL: ");
     res.status(500).json({

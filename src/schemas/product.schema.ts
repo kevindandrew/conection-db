@@ -22,6 +22,14 @@ export const createProductoSchema = z.object({
     .min(1),
 });
 
+export interface productQueryParams {
+  page?: string;
+  limit?: string;
+  search?: string;
+  minPrice?: string;
+  maxPrice?: string;
+}
+
 export const updateProductoSchema = createProductoSchema
   .partial()
   .refine((data) => Object.keys(data).length > 0, {

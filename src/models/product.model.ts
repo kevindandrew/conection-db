@@ -1,6 +1,7 @@
 import type { z } from "zod";
 import { pool } from "../config/db.js";
 import type { updateProductoSchema } from "../schemas/product.schema.js";
+import { pathToFileURL } from "node:url";
 
 //TIPADO DE LA TABLA
 export interface Producto {
@@ -8,6 +9,14 @@ export interface Producto {
   nombre: string;
   precio: number;
   categoria: string;
+}
+
+export interface paginaResult<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
 }
 // apartir de el tipado crear otros types
 export type CreateProductoInput = Omit<Producto, "id">;
@@ -69,5 +78,60 @@ export const ProductModel = {
       [name],
     );
     return rows[0] || null;
+  },
+  findWhitFilter: async (
+    page: number = 1,
+    limit: number = 10,
+    search?: string, // where name ILIKE %${search}%
+    minPrice?: number, // where precio >= ${minPirce}
+    maxPrice?: number, // where precio <= ${maxPrice}
+  ): Promise<paginaResult<Producto>> => {
+    const conditions: string[] = [];
+    const values: any[] = [];
+    let paramIndex = 1;
+
+    //la construccion de las condiciones
+    if (search) {
+      conditions.push(`nombre ILIKE $${paramIndex}`);
+      paramIndex++;
+      values.push(`%${search}%`);
+    }
+
+    if (minPrice !== undefined) {
+      conditions.push(`precio >= $${paramIndex}`);
+      paramIndex++;
+      values.push(minPrice);
+    }
+    if (maxPrice !== undefined) {
+      conditions.push(`precio <= ${maxPrice}`);
+      paramIndex++;
+      values.push(maxPrice);
+    }
+    // unir las condiciones existentes con AND
+    const whereUnited =
+      conditions.length > 0 ? `WHERE ${conditions.join(` AND `)}` : "";
+    //CONTEO TOTAL de prodcutos q coinciden con los filtros aplicados (en caso de haberlos)
+    const countQuery = `SELECT COUNT(*) FROM productos ${whereUnited}`;
+    const countResult = await pool.query(countQuery, values);
+    const total = Number(countResult.rows[0].count);
+    //consulta de datos con limit y offset
+    const offset = (page - 1) * limit;
+    //agregar el limit y offset a los placeholder dinamicos
+    const dataValues = [...values, limit, offset];
+    const dataQuery = `
+    SELECT * FROM productos
+    ${whereUnited}
+    ORDER BY id ASC
+    LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+    `;
+    const { rows } = await pool.query(dataQuery, dataValues);
+
+    return {
+      data: rows,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit) || 1,
+    };
   },
 };
